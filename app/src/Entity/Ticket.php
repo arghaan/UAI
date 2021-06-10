@@ -30,18 +30,37 @@ class Ticket
 
     /**
      * @ORM\Column(type="integer")
+     *  free = 0
+     *  booked = 1
+     *  sold out = 2
      */
     private int $status = 0;
 
     /**
-     * @ORM\Column(type="string", nullable=true)
+     * @ORM\Column(type="string", nullable=true, unique=true)
      */
-    private ?int $bookingKey;
+    private ?string $bookingKey;
+
+    /**
+     * @ORM\Column(type="string", nullable=true, unique=true)
+     */
+    private ?string $purchaseKey;
 
     /**
      * @ORM\Column(type="string", nullable=true)
      */
-    private ?int $purchaseKey;
+    private ?string $customerEmail;
+
+    public function getCustomerEmail(): ?string
+    {
+        return $this->customerEmail;
+    }
+
+    public function setCustomerEmail(?string $customerEmail): static
+    {
+        $this->customerEmail = $customerEmail;
+        return $this;
+    }
 
     /**
      * @return int
@@ -51,12 +70,10 @@ class Ticket
         return $this->status;
     }
 
-    /**
-     * @param int $status
-     */
-    public function setStatus(int $status): void
+    public function setStatus(int $status): static
     {
         $this->status = $status;
+        return $this;
     }
 
     public function getId(): int
@@ -69,7 +86,7 @@ class Ticket
         return $this->flight;
     }
 
-    public function setFlight(Flight $flight): self
+    public function setFlight(Flight $flight): static
     {
         $this->flight = $flight;
 
@@ -81,31 +98,35 @@ class Ticket
         return $this->placeNumber;
     }
 
-    public function setPlaceNumber(int $placeNumber): self
+    public function setPlaceNumber(int $placeNumber): static
     {
         $this->placeNumber = $placeNumber;
 
         return $this;
     }
 
-    public function getPurchaseKey(): ?int
+    public function getPurchaseKey(): ?string
     {
         return $this->purchaseKey;
     }
 
-    public function setPurchaseKey(?int $purchaseKey): void
+    public function setPurchaseKey(?string $purchaseKey): static
     {
         $this->purchaseKey = $purchaseKey;
+
+        return $this;
     }
 
-    public function getBookingKey(): ?int
+    public function getBookingKey(): ?string
     {
         return $this->bookingKey;
     }
 
-    public function setBookingKey(?int $bookingKey): void
+    public function setBookingKey(?string $bookingKey): static
     {
         $this->bookingKey = $bookingKey;
+
+        return $this;
     }
 
 }

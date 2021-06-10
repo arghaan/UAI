@@ -22,6 +22,10 @@ class Flight
 
     /**
      * @ORM\Column(type="integer")
+     *
+     *  sales = 0
+     *  sales completes = 1
+     *  canceled = 2
      */
     private int $status = 0;
 
@@ -34,6 +38,11 @@ class Flight
      * @ORM\OneToMany(targetEntity=Ticket::class, mappedBy="flight", orphanRemoval=true)
      */
     private Collection $tickets;
+
+    /**
+     * @ORM\Column(type="string")
+     */
+    private string $secretKey;
 
     #[Pure]
     public function __construct()
@@ -96,5 +105,17 @@ class Flight
     public function setFlightVolume(int $flightVolume): void
     {
         $this->flightVolume = $flightVolume;
+    }
+
+    public function getSecretKey(): string
+    {
+        return $this->secretKey;
+    }
+
+    public function setSecretKey(string $secretKey): static
+    {
+        $this->secretKey = $secretKey;
+
+        return $this;
     }
 }

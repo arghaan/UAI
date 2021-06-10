@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Hello customer!{% endblock %}</title>
+</head>
+<body>
+{% block body %}
+    <h1>Hello customer!</h1>
+    <p>
+        Your ticket on flight #{{ flight_id }} with place #{{ place_number}} has refunding because the flight was canceled.
+    </p>
+{% endblock %}
+</body>
+</html>

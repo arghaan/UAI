@@ -1,0 +1,102 @@
+version: '3.3'
+
+services:
+
+  traefik:
+    image: traefik:latest
+    container_name: proxy
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker"
+      - "--providers.docker.exposedByDefault=false"
+    networks:
+      net:
+        ipv4_address: 172.16.112.10
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.nginx.rule=Host(`test.site.local`)
+    networks:
+      net:
+        ipv4_address: 172.16.112.15
+    ports:
+      - "80:80"
+#      - "443:443"
+    volumes:
+      - ./services/nginx/conf.d:/etc/nginx/conf.d
+      - ../app:/var/www/html:rw
+
+  php8_fpm:
+    build: services/php8.0-fpm
+    container_name: php8_fpm
+    networks:
+      net:
+        ipv4_address: 172.16.112.20
+    ports:
+      - "9000:9000"
+    environment:
+      PHP_EXTENSION_XDEBUG: 1
+      PHP_EXTENSION_GD: 1
+      PHP_EXTENSION_AMQP: 1
+      PHP_EXTENSION_PGSQL: 1
+      PHP_EXTENSION_PDO_PGSQL: 1
+      PHP_INI_MEMORY_LIMIT: 1G
+      PHP_INI_MAX_EXECUTION_TIME: 120
+    volumes:
+      - ../app:/var/www/html:rw
+      - ./services/php8.0-fpm/pool.d:/etc/php/8.0/fpm/pool.d/
+
+  php8_cli_supervisor:
+    build: services/php8.0-cli-supervisor
+    container_name: php8-cli-supervisor
+    environment:
+      PHP_EXTENSION_XDEBUG: 1
+      PHP_EXTENSION_AMQP: 1
+      PHP_INI_MEMORY_LIMIT: 1G
+      PHP_INI_MAX_EXECUTION_TIME: 120
+    networks:
+      net:
+        ipv4_address: 172.16.112.22
+    volumes:
+      - ../app:/var/www/html:rw
+      - ./services/php8.0-cli-supervisor/etc/supervisor:/etc/supervisor
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    labels:
+      - traefik.enable=true
+    networks:
+      net:
+        ipv4_address: 172.16.112.25
+    ports:
+      - "5672:5672"
+      - "8081:15672"
+
+  pgsql:
+    image: postgres:13
+    container_name: pgsql
+    networks:
+      net:
+        ipv4_address: 172.16.112.30
+    environment:
+      POSTGRES_PASSWORD: pgsql
+      POSTGRES_USER: pgsql
+      POSTGRES_DB: app_db
+    ports:
+      - "5432:5432"
+
+networks:
+  net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.112.0/24

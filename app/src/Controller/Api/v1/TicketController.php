@@ -4,14 +4,11 @@ namespace App\Controller\Api\v1;
 
 use App\Entity\Flight;
 use App\Entity\Ticket;
-use App\Repository\TicketRepository;
 use App\Service\FlightService;
 use App\Service\TicketService;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
 class TicketController extends AbstractController
@@ -26,7 +23,7 @@ class TicketController extends AbstractController
     #[Route('/api/v1/ticket/book/{flight<\d+>}', name: 'book_ticket', methods: 'POST')]
     public function book(?Flight $flight = null): Response
     {
-        if (is_null($flight)){
+        if (is_null($flight)) {
             return $this->json([
                 "message" => "Unknown flight number",
                 "status" => "error",
@@ -48,6 +45,22 @@ class TicketController extends AbstractController
             ], Response::HTTP_OK);
         } else {
             return $this->checkErrors($result);
+        }
+    }
+
+    private function checkErrors(array|Ticket $result): Response
+    {
+        if (is_array($result) && $result['status'] === 'error') {
+            return $this->json([
+                'message' => $result['message'],
+                'status' => 'error',
+                'data' => []
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } else {
+            return $this->json([
+                'message' => 'Unknown Error',
+                'status' => 'error'
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -80,7 +93,7 @@ class TicketController extends AbstractController
     #[Route('/api/v1/ticket/buy/{flight<\d+>}', name: 'buy', methods: 'POST')]
     public function buy(Request $request, ?Flight $flight = null): Response
     {
-        if (is_null($flight)){
+        if (is_null($flight)) {
             return $this->json([
                 "message" => "Unknown flight humber",
                 "status" => "error",
@@ -138,22 +151,6 @@ class TicketController extends AbstractController
             ], Response::HTTP_OK);
         } else {
             return $this->checkErrors($result);
-        }
-    }
-
-    private function checkErrors(array|Ticket $result): Response
-    {
-        if (is_array($result) && $result['status'] === 'error') {
-            return $this->json([
-                'message' => $result['message'],
-                'status' => 'error',
-                'data' => []
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        } else {
-            return $this->json([
-                'message' => 'Unknown Error',
-                'status' => 'error'
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }

@@ -8,12 +8,12 @@ use App\Entity\Ticket;
 final class SendEmailMessage
 {
 
-     public function __construct(
-         private Flight $flight,
-         private Ticket $ticket
-     )
-     {
-     }
+    public function __construct(
+        private Flight $flight,
+        private Ticket $ticket
+    )
+    {
+    }
 
     public function getTicket(): Ticket
     {

@@ -28,8 +28,7 @@ class TicketRepository extends ServiceEntityRepository
             ->setParameter('flight_id', $flight->getId())
             ->setParameter('a', 0)
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
 
     /*

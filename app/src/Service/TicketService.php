@@ -28,8 +28,7 @@ class TicketService
             $ticket
                 ->setStatus(1)
                 ->setBookingKey($this->token->generateToken())
-                ->setCustomerEmail($this->mailerTo)
-            ;
+                ->setCustomerEmail($this->mailerTo);
             $this->em->persist($ticket);
             $this->em->flush();
         } else {
@@ -38,6 +37,30 @@ class TicketService
         }
 
         return $ticket;
+    }
+
+    private function checkFlight($flight): ?array
+    {
+        if (!$flight) {
+            return ['status' => 'error', 'message' => 'Unknown flight'];
+        } elseif ($flight->getStatus() === 1) {
+            return ['status' => 'error', 'message' => 'Sales completed'];
+        } elseif ($flight->getStatus() === 2) {
+            return ['status' => 'error', 'message' => 'Flight is canceled'];
+        } else {
+            return null;
+        }
+    }
+
+    private function getFirstFree(Flight $flight): ?Ticket
+    {
+        return $this->ticketRepository->findOneBy(
+            [
+                'flight' => $flight,
+                'status' => 0
+            ],
+            ['placeNumber' => 'ASC']
+        );
     }
 
     public function buy(Flight $flight, ?string $bookingKey = null): array|Ticket
@@ -53,8 +76,7 @@ class TicketService
                 $ticket
                     ->setStatus(2)
                     ->setPurchaseKey($this->token->generateToken())
-                    ->setCustomerEmail(self::CUSTOMER_EMAIL)
-                ;
+                    ->setCustomerEmail(self::CUSTOMER_EMAIL);
                 $this->em->persist($ticket);
                 $this->em->flush();
             } else {
@@ -66,8 +88,7 @@ class TicketService
                 $ticket
                     ->setStatus(2)
                     ->setPurchaseKey($this->token->generateToken())
-                    ->setCustomerEmail(self::CUSTOMER_EMAIL)
-                ;
+                    ->setCustomerEmail(self::CUSTOMER_EMAIL);
                 $this->em->persist($ticket);
                 $this->em->flush();
             } else {
@@ -89,8 +110,7 @@ class TicketService
             $ticket
                 ->setBookingKey(null)
                 ->setStatus(0)
-                ->setCustomerEmail(null)
-            ;
+                ->setCustomerEmail(null);
             $this->em->persist($ticket);
             $this->em->flush();
             return $ticket;
@@ -108,37 +128,12 @@ class TicketService
                 ->setPurchaseKey(null)
                 ->setBookingKey(null)
                 ->setStatus(0)
-                ->setCustomerEmail(null)
-            ;
+                ->setCustomerEmail(null);
             $this->em->persist($ticket);
             $this->em->flush();
             return $ticket;
         } else {
             return ['status' => 'error', 'message' => 'Unknown purchase key'];
-        }
-    }
-
-    private function getFirstFree(Flight $flight): ?Ticket
-    {
-        return $this->ticketRepository->findOneBy(
-            [
-                'flight' => $flight,
-                'status' => 0
-            ],
-            ['placeNumber' => 'ASC']
-        );
-    }
-
-    private function checkFlight($flight): ?array
-    {
-        if (!$flight) {
-            return ['status' => 'error', 'message' => 'Unknown flight'];
-        } elseif ($flight->getStatus() === 1) {
-            return ['status' => 'error', 'message' => 'Sales completed'];
-        } elseif ($flight->getStatus() === 2) {
-            return ['status' => 'error', 'message' => 'Flight is canceled'];
-        } else {
-            return null;
         }
     }
 

@@ -66,7 +66,7 @@ class FlightService
     {
         $flights = $this->flightRepository->findBy(['status' => 0]);
         $ids = [];
-        foreach ($flights as $flight){
+        foreach ($flights as $flight) {
             $ids[] = $flight->getId();
         }
         return $ids;

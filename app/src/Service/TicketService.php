@@ -10,12 +10,11 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class TicketService
 {
-    private const CUSTOMER_EMAIL = 'arghaan@gmail.com';
-
     public function __construct(
         private EntityManagerInterface $em,
         private TicketRepository $ticketRepository,
-        private Token $token
+        private Token $token,
+        private string $mailerTo
     )
     {
     }
@@ -29,7 +28,7 @@ class TicketService
             $ticket
                 ->setStatus(1)
                 ->setBookingKey($this->token->generateToken())
-                ->setCustomerEmail(self::CUSTOMER_EMAIL)
+                ->setCustomerEmail($this->mailerTo)
             ;
             $this->em->persist($ticket);
             $this->em->flush();

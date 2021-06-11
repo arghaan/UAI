@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Entity\Flight;
 use App\Message\SendEmailMessage;
+use App\Repository\FlightRepository;
 use App\Repository\TicketRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -16,6 +17,7 @@ class FlightService
         private EntityManagerInterface $em,
         private MessageBusInterface $bus,
         private TicketRepository $ticketRepository,
+        private FlightRepository $flightRepository,
     )
     {
     }
@@ -58,5 +60,15 @@ class FlightService
         $this->em->persist($flight);
         $this->em->flush();
         return $flight;
+    }
+
+    public function getFlightIds(): array
+    {
+        $flights = $this->flightRepository->findBy(['status' => 0]);
+        $ids = [];
+        foreach ($flights as $flight){
+            $ids[] = $flight->getId();
+        }
+        return $ids;
     }
 }

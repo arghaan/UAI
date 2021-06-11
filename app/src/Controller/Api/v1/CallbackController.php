@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\Api\v1;
 
 use App\Entity\Flight;
 use App\Repository\FlightRepository;

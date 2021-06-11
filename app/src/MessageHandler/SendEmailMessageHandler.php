@@ -13,7 +13,8 @@ final class SendEmailMessageHandler implements MessageHandlerInterface
 {
 
     public function __construct(
-        private MailerInterface $mailer
+        private MailerInterface $mailer,
+        private string $mailerFrom
     )
     {
     }
@@ -21,7 +22,7 @@ final class SendEmailMessageHandler implements MessageHandlerInterface
     public function __invoke(SendEmailMessage $message)
     {
         $email = (new TemplatedEmail())
-            ->from('dev.arghaan@gmail.com')
+            ->from($this->mailerFrom)
             ->to(new Address($message->getTicket()->getCustomerEmail()))
             ->subject("Flight #{$message->getFlight()->getId()} is canceled")
             ->htmlTemplate("emails/flight_canceled.html.twig")

@@ -1,26 +1,40 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\Api\v1;
 
 use App\Entity\Flight;
 use App\Entity\Ticket;
+use App\Repository\TicketRepository;
+use App\Service\FlightService;
 use App\Service\TicketService;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
 class TicketController extends AbstractController
 {
     public function __construct(
-        private TicketService $ticketService
+        private TicketService $ticketService,
+        private FlightService $flightService,
     )
     {
     }
 
     #[Route('/api/v1/ticket/book/{flight<\d+>}', name: 'book_ticket', methods: 'POST')]
-    public function book(Flight $flight): Response
+    public function book(?Flight $flight = null): Response
     {
+        if (is_null($flight)){
+            return $this->json([
+                "message" => "Unknown flight number",
+                "status" => "error",
+                "data" => [
+                    "flights" => implode(", ", $this->flightService->getFlightIds())
+                ]
+            ], Response::HTTP_NOT_FOUND);
+        }
         $result = $this->ticketService->book($flight);
         if ($result instanceof Ticket) {
             return $this->json([
@@ -64,8 +78,17 @@ class TicketController extends AbstractController
     }
 
     #[Route('/api/v1/ticket/buy/{flight<\d+>}', name: 'buy', methods: 'POST')]
-    public function buy(Request $request, Flight $flight): Response
+    public function buy(Request $request, ?Flight $flight = null): Response
     {
+        if (is_null($flight)){
+            return $this->json([
+                "message" => "Unknown flight humber",
+                "status" => "error",
+                "data" => [
+                    "flights" => implode(", ", $this->flightService->getFlightIds())
+                ]
+            ], Response::HTTP_NOT_FOUND);
+        }
         $data = json_decode($request->getContent(), true);
         if (isset($data['data'])) {
             if (!is_array($data) || !isset($data['booking_key'])) {

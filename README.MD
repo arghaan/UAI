@@ -5,8 +5,7 @@
 Клонируем репозиторий
 
 ```shell
-git clone https://github.com/arghaan/UAI.git ./UAI
-cd UAI
+git clone https://github.com/arghaan/UAI.git ./UAI && cd UAI
 ```
 Копируем настройки проекта 
 ```
@@ -15,6 +14,8 @@ cp ./app/.env.dist ./app/.env
 _Для отправки писем нужно настроить переменные MAILER__*
 
 ---
+
+### При первом запуске
 Стартуем Docker контейнер с php_fpm
 ```shell
 docker-compose -f .docker/docker-compose.yml up -d php8_fpm
@@ -31,9 +32,24 @@ docker-compose -f .docker/docker-compose.yml up -d
 ```
 Запускаем миграции и грузим фикстуры
 ```shell
-docker exec -it php8_fpm bin/console doctrine:migrations:migrate
-docker exec -it php8_fpm bin/console doctrine:fixture:load
+docker exec -it php8_fpm bin/console doctrine:migrations:migrate --no-interaction \
+    && docker exec -it php8_fpm bin/console doctrine:fixture:load --no-interaction
 ```
+
+### При последующих запусках достаточно выполнить
+
+```shell
+docker-compose -f /path/to/project/.docker/docker-compose.yml up -d
+```
+
+API доступен по адресу: http://localhost:80/api/v1/
+
+Админка RabbitMQ: http://localhost:8081/  
+login: guest  
+password: guest
+
+
+
 ## System Requirements
 <details>
 Данная сборка docker-compose тестировалась на следующей конфигурации:

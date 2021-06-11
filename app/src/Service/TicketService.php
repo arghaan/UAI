@@ -14,7 +14,8 @@ class TicketService
         private EntityManagerInterface $em,
         private TicketRepository $ticketRepository,
         private Token $token,
-        private string $mailerTo
+        private string $mailerTo,
+        private FlightService $flightService
     )
     {
     }
@@ -32,7 +33,7 @@ class TicketService
             $this->em->persist($ticket);
             $this->em->flush();
         } else {
-            // TODO: Question! Set flight status "Sales completed" if needed
+            $this->flightService->stopSales($flight); // Sales is closing up because have no available tickets
             return ['status' => 'error', 'message' => 'Sales completed'];
         }
 
@@ -76,7 +77,7 @@ class TicketService
                 $ticket
                     ->setStatus(2)
                     ->setPurchaseKey($this->token->generateToken())
-                    ->setCustomerEmail(self::CUSTOMER_EMAIL);
+                    ->setCustomerEmail($this->mailerTo);
                 $this->em->persist($ticket);
                 $this->em->flush();
             } else {
@@ -88,11 +89,11 @@ class TicketService
                 $ticket
                     ->setStatus(2)
                     ->setPurchaseKey($this->token->generateToken())
-                    ->setCustomerEmail(self::CUSTOMER_EMAIL);
+                    ->setCustomerEmail($this->mailerTo);
                 $this->em->persist($ticket);
                 $this->em->flush();
             } else {
-                // TODO: Question! Set flight status "Sales completed" if needed
+                $this->flightService->stopSales($flight); // Sales is closing up because have no available tickets
                 return ['status' => 'error', 'message' => 'Sales completed'];
             }
         }
@@ -113,6 +114,9 @@ class TicketService
                 ->setCustomerEmail(null);
             $this->em->persist($ticket);
             $this->em->flush();
+            if ($ticket->getFlight()->getStatus() === 1) { // Sales is opening because the ticket became available
+                $this->flightService->startSales($ticket->getFlight());
+            }
             return $ticket;
         } else {
             return ['status' => 'error', 'message' => 'Unknown booking key'];
@@ -131,6 +135,9 @@ class TicketService
                 ->setCustomerEmail(null);
             $this->em->persist($ticket);
             $this->em->flush();
+            if ($ticket->getFlight()->getStatus() === 1) { // Sales is opening because the ticket became available
+                $this->flightService->startSales($ticket->getFlight());
+            }
             return $ticket;
         } else {
             return ['status' => 'error', 'message' => 'Unknown purchase key'];

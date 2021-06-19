@@ -7,6 +7,7 @@ use App\Entity\Ticket;
 use App\Repository\TicketRepository;
 use App\Util\Token;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class TicketService
 {
@@ -14,42 +15,38 @@ class TicketService
         private EntityManagerInterface $em,
         private TicketRepository $ticketRepository,
         private Token $token,
-        private string $mailerTo,
         private FlightService $flightService
     )
     {
     }
 
-    public function book(Flight $flight): array|Ticket
+    public function book(Flight $flight, string $email): Ticket
     {
-        $flightStatus = $this->checkFlight($flight);
-        if (!is_null($flightStatus)) return $flightStatus;
+        $this->checkFlight($flight);
         $ticket = $this->getFirstFree($flight);
         if ($ticket) {
             $ticket
                 ->setStatus(1)
                 ->setBookingKey($this->token->generateToken())
-                ->setCustomerEmail($this->mailerTo);
+                ->setCustomerEmail($email);
             $this->em->persist($ticket);
             $this->em->flush();
         } else {
             $this->flightService->stopSales($flight); // Sales is closing up because have no available tickets
-            return ['status' => 'error', 'message' => 'Sales completed'];
+            throw new BadRequestHttpException('Sales completed');
         }
 
         return $ticket;
     }
 
-    private function checkFlight($flight): ?array
+    private function checkFlight($flight): void
     {
         if (!$flight) {
-            return ['status' => 'error', 'message' => 'Unknown flight'];
+            throw new BadRequestHttpException('Unknown flight');
         } elseif ($flight->getStatus() === 1) {
-            return ['status' => 'error', 'message' => 'Sales completed'];
+            throw new BadRequestHttpException('Sales completed');
         } elseif ($flight->getStatus() === 2) {
-            return ['status' => 'error', 'message' => 'Flight is canceled'];
-        } else {
-            return null;
+            throw new BadRequestHttpException('Flight is canceled');
         }
     }
 
@@ -64,49 +61,41 @@ class TicketService
         );
     }
 
-    public function buy(Flight $flight, ?string $bookingKey = null): array|Ticket
+    public function buy(Flight $flight, string $email, ?string $bookingKey = null): Ticket
     {
-        $flightStatus = $this->checkFlight($flight);
-        if (!is_null($flightStatus)) return $flightStatus;
+        $this->checkFlight($flight);
         if (!is_null($bookingKey)) {
             $ticket = $this->ticketRepository->findOneBy(['bookingKey' => $bookingKey, 'status' => 1]);
             if ($ticket) {
                 if ($ticket->getStatus() === 2) {
-                    return ['status' => 'error', 'message' => 'The ticket is already sold out'];
+                    throw new BadRequestHttpException('The ticket is already sold out');
                 }
-                $ticket
-                    ->setStatus(2)
-                    ->setPurchaseKey($this->token->generateToken())
-                    ->setCustomerEmail($this->mailerTo);
-                $this->em->persist($ticket);
-                $this->em->flush();
             } else {
-                return ['status' => 'error', 'message' => 'Unknown booking key'];
+                throw new BadRequestHttpException('Unknown booking key');
             }
         } else {
             $ticket = $this->getFirstFree($flight);
-            if ($ticket) {
-                $ticket
-                    ->setStatus(2)
-                    ->setPurchaseKey($this->token->generateToken())
-                    ->setCustomerEmail($this->mailerTo);
-                $this->em->persist($ticket);
-                $this->em->flush();
-            } else {
+            if (is_null($ticket)) {
                 $this->flightService->stopSales($flight); // Sales is closing up because have no available tickets
-                return ['status' => 'error', 'message' => 'Sales completed'];
+                throw new BadRequestHttpException('Sales completed');
             }
         }
+        $ticket
+            ->setStatus(2)
+            ->setPurchaseKey($this->token->generateToken())
+            ->setCustomerEmail($email);
+        $this->em->persist($ticket);
+        $this->em->flush();
         return $ticket;
     }
 
-    public function cancelBooking(string $bookingKey): array|Ticket
+    public function cancelBooking(string $bookingKey): Ticket
     {
         $ticket = $this->ticketRepository->findOneBy(['bookingKey' => $bookingKey]);
 
         if (!is_null($ticket)) {
             if ($ticket->getStatus() === 2) {
-                return ['status' => 'error', 'message' => 'The ticket is already sold out'];
+                throw new BadRequestHttpException('The ticket is already sold out');
             }
             $ticket
                 ->setBookingKey(null)
@@ -119,11 +108,11 @@ class TicketService
             }
             return $ticket;
         } else {
-            return ['status' => 'error', 'message' => 'Unknown booking key'];
+            throw new BadRequestHttpException('Unknown booking key');
         }
     }
 
-    public function cancelPurchase(string $purchaseKey): array|Ticket
+    public function cancelPurchase(string $purchaseKey): Ticket
     {
         $ticket = $this->ticketRepository->findOneBy(['purchaseKey' => $purchaseKey]);
 
@@ -140,7 +129,7 @@ class TicketService
             }
             return $ticket;
         } else {
-            return ['status' => 'error', 'message' => 'Unknown purchase key'];
+            throw new BadRequestHttpException('Unknown purchase key');
         }
     }
 

@@ -3,31 +3,17 @@
 namespace App\Controller\Api\v1;
 
 use App\Entity\Flight;
+use App\Entity\Ticket;
 use App\Http\Request\TicketRequestDTO;
 use App\Service\TicketService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 
 class TicketController extends AbstractController
 {
-    private const TICKET = [
-        AbstractNormalizer::ATTRIBUTES => [
-            'id',
-            'flight' => [
-                'id'
-            ],
-            'placeNumber',
-            'status',
-            'bookingKey',
-            'purchaseKey',
-            'customerEmail',
-        ]
-    ];
-
     public function __construct(
         private TicketService $ticketService,
         private SerializerInterface $serializer,
@@ -44,7 +30,7 @@ class TicketController extends AbstractController
             $this->serializer->serialize(
                 $ticket,
                 'json',
-                self::TICKET
+                Ticket::ATTRIBUTES
             ),
             json: true
         );
@@ -73,7 +59,7 @@ class TicketController extends AbstractController
             $this->serializer->serialize(
                 $ticket,
                 'json',
-                self::TICKET
+                Ticket::ATTRIBUTES
             ),
             json: true
         );

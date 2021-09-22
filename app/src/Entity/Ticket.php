@@ -5,12 +5,27 @@ namespace App\Entity;
 use App\Repository\TicketRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
 /**
  * @ORM\Entity(repositoryClass=TicketRepository::class)
  */
 class Ticket
 {
+    const ATTRIBUTES = [
+        AbstractNormalizer::ATTRIBUTES => [
+            'id',
+            'flight' => [
+                'id'
+            ],
+            'placeNumber',
+            'status',
+            'bookingKey',
+            'purchaseKey',
+            'customerEmail',
+        ]
+    ];
+
     /**
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
